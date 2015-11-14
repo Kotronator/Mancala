@@ -112,7 +112,7 @@ public class Mancala {
         printBoard(mancalaBoard);
     }
     
-    public static int[] doMove(int[] board ,int player,int position)
+    public static boolean doMove(int[] board ,int player,int position)
     {
        
         int gems=board[position];
@@ -128,7 +128,7 @@ public class Mancala {
                 board[i%14]++;
         }
         //printBoard(board);
-        return board;
+        return true;
         
     }
     
@@ -266,6 +266,88 @@ public class Mancala {
             this.v=evalutation;
             this.movePosition=move;
         }
+    }
+    
+    private static class MancalaBoard {
+        int [] board;
+        int playerTurn;
+        int totalGems;
+        int binsPerPlayer;
+        int numOfPlayers;
+        public MancalaBoard() 
+        {
+          this(4, 6, 2, 0);
+        }
+        
+        public MancalaBoard(int gemsInABin, int binsPerPlayer, int numOfPlayers,int firstPlayer) 
+        {
+            
+            this.numOfPlayers=numOfPlayers;
+            board=new int[binsPerPlayer*numOfPlayers+numOfPlayers];
+            this.binsPerPlayer=binsPerPlayer;
+            playerTurn=firstPlayer;
+            
+            for (int i = 0; i < board.length/numOfPlayers-1; i++) {
+                
+                for (int j = 0; j < numOfPlayers; j++) {
+                    board[i+j*binsPerPlayer+1*j]=gemsInABin;
+                    //board[i+binsPerPlayer+1]=gemsInABin;
+                }
+            }
+        }
+        
+        public void doMove(int position)
+        {
+            int gems=board[position];
+            board[position]=0;
+            int extra=0;
+            
+            int i;
+            for (i = position+1;  i<= position+gems+extra; i++) {
+                //if((this.playerTurn==0 &&  i==board.length-1)||(this.playerTurn==1 &&  i==board.length/2-1))
+                if(isMancala(i)&&getPlayerMancalaIndex(this.playerTurn)!=i)
+                {
+                    extra++;
+                   continue;
+                }
+                else
+                    board[i%14]++;
+                
+            }
+            
+            if(isIndexPlayersBin(-1)&&board[i-1]==1)
+            {
+                
+            }
+            
+            if(i-1!=getPlayerMancalaIndex(this.playerTurn))
+            {
+                playerTurn=playerTurn+1%numOfPlayers;
+            }
+            
+        }
+        
+        public int getPlayerMancalaIndex(int player)
+        {
+            return player*(binsPerPlayer+1)+binsPerPlayer;
+        }
+        
+        public boolean isMancala(int index)
+        {
+            return index%(binsPerPlayer+1)==binsPerPlayer;
+        }
+        
+        public boolean isIndexPlayersBin(int index)
+        {
+            return isIndexPlayersBin(index, this.playerTurn);
+        }
+        
+        public boolean isIndexPlayersBin(int index,int player)
+        {
+            return(index>=((binsPerPlayer+1)*player)&&index<getPlayerMancalaIndex(player));
+        }
+
+        
     }
     
     public static class Pair<F, S> {
