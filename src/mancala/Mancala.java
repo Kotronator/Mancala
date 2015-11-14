@@ -21,6 +21,7 @@ public class Mancala {
     //static int [] mancalaBoard = new int[14];
     static int player=0;
     static MancalaBoard mancalaBoard= new MancalaBoard();
+    static int maxDepth =3;
     //123456M123456M
     
     public static void main(String[] args) {
@@ -31,13 +32,18 @@ public class Mancala {
         mancalaBoard.board[2]=1;
         mancalaBoard.board[3]=0;
         mancalaBoard.board[4]=0;
-        mancalaBoard.board[5]=0;
+        mancalaBoard.board[5]=1;
         printBoard(mancalaBoard.getBoard());
         //( int[] mancalaBoard, int depth, Move a, Move b, int player , Pair<int[],Integer> p )
-        Move choise=minimax(mancalaBoard, 2, new Move(Integer.MIN_VALUE, 0), new Move(Integer.MAX_VALUE, 0));
+        Move choise=minimax(mancalaBoard, maxDepth, new Move(Integer.MIN_VALUE, 0), new Move(Integer.MAX_VALUE, 0));
         
         mancalaBoard.doMove(choise.movePosition);
-        debugPrint("bin played "+choise.movePosition+" with value "+choise.v);
+        System.out.println("bin played "+choise.movePosition+" with value "+choise.v);
+        printBoard(mancalaBoard.getBoard());
+        choise=minimax(mancalaBoard, maxDepth, new Move(Integer.MIN_VALUE, 0), new Move(Integer.MAX_VALUE, 0));
+        
+        mancalaBoard.doMove(choise.movePosition);
+        System.out.println("bin played "+choise.movePosition+" with value "+choise.v);
         printBoard(mancalaBoard.getBoard());
         //System.out.println(choise.movePosition+" "+choise.v);
 //        askPlayerMove(0);
@@ -171,9 +177,11 @@ public class Mancala {
             List<MancalaBoard> childs;
             childs=mancalaBoard.generateChildren();
             for (MancalaBoard child : childs) {
-                //v.movePosition=child.lastBinPlayed;
+                
                 //p.second=child.second;
                 v=max(v, minimax(child, depth-1, a, b));
+                if(depth!=maxDepth)
+                v.movePosition=mancalaBoard.lastBinPlayed;
                 a=max(a,v);
                 //System.out.println("v"+v.movePosition+" "+v.v);
                 if(b.v<=a.v)
@@ -189,7 +197,11 @@ public class Mancala {
             childs=mancalaBoard.generateChildren();
             for (MancalaBoard child : childs) {
                 //v.movePosition=child.second;
+                //v.movePosition=child.lastBinPlayed;
+                
                 v=min(v, minimax(child, depth-1, a, b));
+                if(depth!=maxDepth)
+                v.movePosition=mancalaBoard.lastBinPlayed;
                 a=min(b,v);
                 if(b.v<=a.v)
                     break;
@@ -201,7 +213,7 @@ public class Mancala {
     
     public static void debugPrint(Object obj)
     {
-        System.out.println(obj);
+        //System.out.println(obj);
     }
     
     public static Move min(Move move1 , Move move2)
