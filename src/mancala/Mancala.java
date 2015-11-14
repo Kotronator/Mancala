@@ -26,17 +26,19 @@ public class Mancala {
     public static void main(String[] args) {
         
 //        initiateBoard();
-//        mancalaBoard[0]=2;
-//        mancalaBoard[1]=5;
-//        mancalaBoard[2]=1;
-//        mancalaBoard[3]=0;
-//        mancalaBoard[4]=0;
-//        mancalaBoard[5]=0;
+        mancalaBoard.board[0]=2;
+        mancalaBoard.board[1]=5;
+        mancalaBoard.board[2]=1;
+        mancalaBoard.board[3]=0;
+        mancalaBoard.board[4]=0;
+        mancalaBoard.board[5]=0;
         printBoard(mancalaBoard.getBoard());
         //( int[] mancalaBoard, int depth, Move a, Move b, int player , Pair<int[],Integer> p )
-        Move choise=minimax(mancalaBoard, 1, new Move(Integer.MIN_VALUE, 0), new Move(Integer.MAX_VALUE, 0), 0, new Pair<int[],Integer>(null,0));
-        //doMove(mancalaBoard, 0, choise.movePosition);
-         //printBoard(mancalaBoard);
+        Move choise=minimax(mancalaBoard, 2, new Move(Integer.MIN_VALUE, 0), new Move(Integer.MAX_VALUE, 0));
+        
+        mancalaBoard.doMove(choise.movePosition);
+        debugPrint("bin played "+choise.movePosition+" with value "+choise.v);
+        printBoard(mancalaBoard.getBoard());
         //System.out.println(choise.movePosition+" "+choise.v);
 //        askPlayerMove(0);
 //        askPlayerMove(0);
@@ -150,24 +152,28 @@ public class Mancala {
 //    r.v
 //            r.move
      
-    public static Move minimax(MancalaBoard mancalaBoard, int depth, Move a, Move b, int player , Pair<int[],Integer> p )
+    public static Move minimax(MancalaBoard mancalaBoard, int depth, Move a, Move b/*, int player , Pair<int[],Integer> p*/ )
     {
         // Integer.MAX_VALUE
         Move v= new Move();
         if(depth==0 || mancalaBoard.isFinished())
         {
+            int val=evalutation(mancalaBoard,(mancalaBoard.playerTurn));
+            int movepos = mancalaBoard.lastBinPlayed;
+            debugPrint("Entering depth 0"+mancalaBoard.isFinished()+" "+val+":"+movepos);
             //System.out.println("d"+evalutation(mancalaBoard,player*-1+1)+":"+p.second);
-            return new Move(evalutation(mancalaBoard,player*-1+1),p.second);
+            return new Move(val,movepos);
         }
-        if(player==0)
+        if(mancalaBoard.playerTurn==0)
         {
+            debugPrint("Entering max");
             v.v = new Integer(Integer.MIN_VALUE);
-            List<Pair<int[],Integer>> childs;
-            childs=generateChildren(mancalaBoard, player);
-            for (Pair<int[],Integer> child : childs) {
-                //v.movePosition=child.second;
-                p.second=child.second;
-                v=max(v, minimax(child.first, depth-1, a, b, player+1,p));
+            List<MancalaBoard> childs;
+            childs=mancalaBoard.generateChildren();
+            for (MancalaBoard child : childs) {
+                //v.movePosition=child.lastBinPlayed;
+                //p.second=child.second;
+                v=max(v, minimax(child, depth-1, a, b));
                 a=max(a,v);
                 //System.out.println("v"+v.movePosition+" "+v.v);
                 if(b.v<=a.v)
@@ -177,12 +183,13 @@ public class Mancala {
         }
         else
         {
+            debugPrint("Entering min");
             v.v = Integer.MAX_VALUE;
-            List<Pair<int[],Integer>> childs;
-            childs=generateChildren(mancalaBoard, player);
-            for (Pair<int[],Integer> child : childs) {
-                v.movePosition=child.second;
-                v=min(v, minimax(child.first, depth-1, a, b, player-1,p));
+            List<MancalaBoard> childs;
+            childs=mancalaBoard.generateChildren();
+            for (MancalaBoard child : childs) {
+                //v.movePosition=child.second;
+                v=min(v, minimax(child, depth-1, a, b));
                 a=min(b,v);
                 if(b.v<=a.v)
                     break;
@@ -190,6 +197,11 @@ public class Mancala {
         }
             
         return v;
+    }
+    
+    public static void debugPrint(Object obj)
+    {
+        System.out.println(obj);
     }
     
     public static Move min(Move move1 , Move move2)
@@ -230,25 +242,25 @@ public class Mancala {
         return (mancalaBoard[mancalaBoard.length/2-1]+mancalaBoard[mancalaBoard.length-1]==48);
     }
 
-    private static List<Pair<int[],Integer>> generateChildren(int[] mancalaBoard, int player) {
-        List<Pair<int[],Integer>> children = new LinkedList<Pair<int[],Integer>>();
-        for (int i = 0; i < mancalaBoard.length/2-1; i++) {
-            
-            int j=i;
-            if(player==1)
-                j=i+7;
-            if(mancalaBoard[j]!=0){
-            children.add(
-                    new Pair(
-                            (doMove(getCopyOfBoard(mancalaBoard), player, j))
-                               ,j
-                         )
-            )
-                    ;
-            }
-        }
-        return children;
-    }
+//    private static List<Pair<int[],Integer>> generateChildren(int[] mancalaBoard, int player) {
+//        List<Pair<int[],Integer>> children = new LinkedList<Pair<int[],Integer>>();
+//        for (int i = 0; i < mancalaBoard.length/2-1; i++) {
+//            
+//            int j=i;
+//            if(player==1)
+//                j=i+7;
+//            if(mancalaBoard[j]!=0){
+//            children.add(
+//                    new Pair(
+//                            (doMove(getCopyOfBoard(mancalaBoard), player, j))
+//                               ,j
+//                         )
+//            )
+//                    ;
+//            }
+//        }
+//        return children;
+//    }
 
     private static int[] getCopyOfBoard(int[] mancalaBoard) {
         int[] board = new int[mancalaBoard.length]; 
@@ -270,12 +282,13 @@ public class Mancala {
         }
     }
     
-    private static class MancalaBoard {
+    public static class MancalaBoard {
         int [] board;
         int playerTurn;
         int totalGems;
         int binsPerPlayer;
         int numOfPlayers;
+        int lastBinPlayed=-1;
         public MancalaBoard() 
         {
           this(4, 6, 2, 0);
@@ -288,7 +301,7 @@ public class Mancala {
             board=new int[binsPerPlayer*numOfPlayers+numOfPlayers];
             this.binsPerPlayer=binsPerPlayer;
             playerTurn=firstPlayer;
-            
+            this.totalGems=numOfPlayers*binsPerPlayer*gemsInABin;
             for (int i = 0; i < board.length/numOfPlayers-1; i++) {
                 
                 for (int j = 0; j < numOfPlayers; j++) {
@@ -305,6 +318,9 @@ public class Mancala {
         
         public void doMove(int position)
         {
+            if(this.board[position]==0)
+                throw new UnsupportedOperationException("Player:"+this.playerTurn+" plays empty bin"+position);
+            this.lastBinPlayed=position;
             int gems=board[position];
             board[position]=0;
             int extra=0;
@@ -330,9 +346,34 @@ public class Mancala {
             
             if(i-1!=getPlayerMancalaIndex(this.playerTurn))
             {
-                playerTurn=playerTurn+1%numOfPlayers;
+                playerTurn=(playerTurn+1)%numOfPlayers;
             }
             
+        }
+        
+        public List<MancalaBoard> generateChildren() {
+            List<MancalaBoard> children = new LinkedList<MancalaBoard>();
+            
+            for (int i = this.getPlayerMancalaIndex(this.playerTurn)-this.binsPerPlayer; i < this.getPlayerMancalaIndex(this.playerTurn); i++) {
+
+                if(this.board[i]!=0){
+                    MancalaBoard child =this.getCopy();
+                    child.doMove(i);
+                    children.add(child);
+                }
+            }
+            return children;
+        }
+        
+        public MancalaBoard getCopy()
+        {
+            //(int gemsInABin, int binsPerPlayer, int numOfPlayers,int firstPlayer)
+            MancalaBoard copy= new MancalaBoard(0, this.binsPerPlayer, this.numOfPlayers, this.playerTurn);
+            for (int i = 0; i < this.board.length; i++) {
+                copy.board[i]= this.board[i];
+                
+            }
+            return copy;
         }
         
         public int getPlayerMancalaIndex(int player)
@@ -372,8 +413,10 @@ public class Mancala {
             for (int i = 0; i < numOfPlayers; i++) {
                 sum=board[getPlayerMancalaIndex(i)];
             }
-            return sum==this.totalGems;
+            return false&&sum==this.totalGems;
         }
+
+       
         
         
     }
