@@ -18,38 +18,39 @@ public class Mancala {
     /**
      * @param args the command line arguments
      */
-    static int [] mancalaBoard = new int[14];
+    //static int [] mancalaBoard = new int[14];
     static int player=0;
+    static MancalaBoard mancalaBoard= new MancalaBoard();
     //123456M123456M
     
     public static void main(String[] args) {
         
-        initiateBoard();
-        mancalaBoard[0]=2;
-        mancalaBoard[1]=5;
-        mancalaBoard[2]=1;
-        mancalaBoard[3]=0;
-        mancalaBoard[4]=0;
-        mancalaBoard[5]=0;
-        printBoard(mancalaBoard);
+//        initiateBoard();
+//        mancalaBoard[0]=2;
+//        mancalaBoard[1]=5;
+//        mancalaBoard[2]=1;
+//        mancalaBoard[3]=0;
+//        mancalaBoard[4]=0;
+//        mancalaBoard[5]=0;
+        printBoard(mancalaBoard.getBoard());
         //( int[] mancalaBoard, int depth, Move a, Move b, int player , Pair<int[],Integer> p )
         Move choise=minimax(mancalaBoard, 1, new Move(Integer.MIN_VALUE, 0), new Move(Integer.MAX_VALUE, 0), 0, new Pair<int[],Integer>(null,0));
-        doMove(mancalaBoard, 0, choise.movePosition);
-         printBoard(mancalaBoard);
+        //doMove(mancalaBoard, 0, choise.movePosition);
+         //printBoard(mancalaBoard);
         //System.out.println(choise.movePosition+" "+choise.v);
 //        askPlayerMove(0);
 //        askPlayerMove(0);
     }
     
-    public static void initiateBoard()
-    {
-        for (int i = 0; i < mancalaBoard.length; i++) {
-            if(i==mancalaBoard.length/2-1||i==mancalaBoard.length-1)
-                mancalaBoard[i]=0;
-            else
-                mancalaBoard[i]=4;
-        }
-    }
+//    public static void initiateBoard()
+//    {
+//        for (int i = 0; i < mancalaBoard.length; i++) {
+//            if(i==mancalaBoard.length/2-1||i==mancalaBoard.length-1)
+//                mancalaBoard[i]=0;
+//            else
+//                mancalaBoard[i]=4;
+//        }
+//    }
     
     public static void printBoard(int [] board)
     {
@@ -94,23 +95,23 @@ public class Mancala {
         System.out.println();
     }
     
-    public static void askPlayerMove(int player)
-    {
-        System.out.println("Player: "+player);
-        System.out.println("Position to move?");
-        Scanner in = new Scanner(System.in);
-        int position = in.nextInt();
-         if (player==0)
-        {
-            position--;
-        }
-        else
-        {
-            position=position+(6-position)*2+1;
-        }
-        doMove(mancalaBoard,0,position);
-        printBoard(mancalaBoard);
-    }
+//    public static void askPlayerMove(int player)
+//    {
+//        System.out.println("Player: "+player);
+//        System.out.println("Position to move?");
+//        Scanner in = new Scanner(System.in);
+//        int position = in.nextInt();
+//         if (player==0)
+//        {
+//            position--;
+//        }
+//        else
+//        {
+//            position=position+(6-position)*2+1;
+//        }
+//        doMove(mancalaBoard,0,position);
+//        printBoard(mancalaBoard);
+//    }
     
     public static boolean doMove(int[] board ,int player,int position)
     {
@@ -132,14 +133,15 @@ public class Mancala {
         
     }
     
-    public static int evalutation(int[] mancalaBoard,int player)
+    public static int evalutation(MancalaBoard mancalaBoard,int player)
     {
-        int score=mancalaBoard[mancalaBoard.length/2-1]-mancalaBoard[mancalaBoard.length-1];
-        if(player==0)
-        {
+        int score= mancalaBoard.getGemsInMancalaOfPlayer(player)-
+                        mancalaBoard.getGemsInMancalaOfPlayer(mancalaBoard.getNextPlayerId(player));
+//        if(player==0)
+//        {
             return score;
-        }
-        else return -score;
+//        }
+//        else return -score;
         
     }
     
@@ -148,11 +150,11 @@ public class Mancala {
 //    r.v
 //            r.move
      
-    public static Move minimax( int[] mancalaBoard, int depth, Move a, Move b, int player , Pair<int[],Integer> p )
+    public static Move minimax(MancalaBoard mancalaBoard, int depth, Move a, Move b, int player , Pair<int[],Integer> p )
     {
         // Integer.MAX_VALUE
         Move v= new Move();
-        if(depth==0 || finalState(mancalaBoard))
+        if(depth==0 || mancalaBoard.isFinished())
         {
             //System.out.println("d"+evalutation(mancalaBoard,player*-1+1)+":"+p.second);
             return new Move(evalutation(mancalaBoard,player*-1+1),p.second);
@@ -296,6 +298,11 @@ public class Mancala {
             }
         }
         
+        public int[] getBoard()
+        {
+            return board;
+        }
+        
         public void doMove(int position)
         {
             int gems=board[position];
@@ -317,6 +324,7 @@ public class Mancala {
             
             if(isIndexPlayersBin(-1)&&board[i-1]==1)
             {
+                board[getPlayerMancalaIndex(this.playerTurn)]+=board[i-1]+board[(getPlayerMancalaIndex(getNextPlayerId(this.playerTurn)))-((i-1)%binsPerPlayer)];
                 
             }
             
@@ -330,6 +338,11 @@ public class Mancala {
         public int getPlayerMancalaIndex(int player)
         {
             return player*(binsPerPlayer+1)+binsPerPlayer;
+        }
+        
+        public int getGemsInMancalaOfPlayer(int player)
+        {
+            return this.board[this.getPlayerMancalaIndex(player)];
         }
         
         public boolean isMancala(int index)
@@ -346,7 +359,22 @@ public class Mancala {
         {
             return(index>=((binsPerPlayer+1)*player)&&index<getPlayerMancalaIndex(player));
         }
+        
+      
+        
+        public int getNextPlayerId(int id)
+        {
+            return (id+1)%numOfPlayers;
+        }
 
+        private boolean isFinished() {
+            int sum = 0;
+            for (int i = 0; i < numOfPlayers; i++) {
+                sum=board[getPlayerMancalaIndex(i)];
+            }
+            return sum==this.totalGems;
+        }
+        
         
     }
     
